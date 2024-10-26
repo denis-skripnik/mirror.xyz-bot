@@ -33,17 +33,20 @@ let cacheFeeds = {};
       cacheFeeds[url] = feed;
     }
     if (Object.keys(feed).length === 0) continue;
-    const lastPosts = []
+    const lastPosts = user.blogs[url] || [];
     if (typeof feed.items === 'undefined' || !feed.items) continue;
-
+    const MAX_MESSAGES = 10;
+    let sentMessages = 0;
     const newLinks = [];
     for (const item of feed.items) {
-      if (user.blogs[url].indexOf(item.link) > -1 || newLinks.includes(item.link)) continue;
+      if (lastPosts.includes(item.link) || newLinks.includes(item.link)) continue;
+      if (sentMessages >= MAX_MESSAGES) break;
       newLinks.push(item.link);
       newPosts++;
       const message = `<a href="${item.link}?referrerAddress=0xaeac266a4533CB0B4255eA2922f997353a18B2E8">${item.title}</a>\n${item.content}
       From ${url}`;
       await botjs.sendMSG(user.id, message);
+      sentMessages++;
     }
     user.blogs[url] = [...new Set([...lastPosts, ...newLinks])];
   } catch(e) {
